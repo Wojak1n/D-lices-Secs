@@ -59,7 +59,7 @@ export const products: Product[] = [
     price: 6.20,
     costPrice: 3.10,
     description: 'Curcuma biologique en poudre, aux propriétés anti-inflammatoires reconnues. Parfait pour vos currys et boissons détox.',
-    image: 'https://images.pexels.com/photos/161556/spices-curry-turmeric-161556.jpeg?auto=compress&cs=tinysrgb&w=500',
+    image: 'https://images.pexels.com/photos/1340116/pexels-photo-1340116.jpeg?auto=compress&cs=tinysrgb&w=500',
     category: '4',
     origin: 'Maroc, Taroudant',
     stock: 25,
