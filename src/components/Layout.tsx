@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Flower2, ShoppingCart, Heart, User, Search, Menu, X } from 'lucide-react';
+import { Flower2, ShoppingCart, Heart, User, Search, Menu, X, Settings } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useState, useEffect, useRef } from 'react';
@@ -16,7 +16,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
+  const [showAdminButton, setShowAdminButton] = useState(false);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleLogout = () => {
     logout();
@@ -35,6 +37,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  // Scroll animation for admin button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowAdminButton(true);
+
+      // Clear existing timeout
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+
+      // Hide button after 3 seconds of no scrolling
+      scrollTimeoutRef.current = setTimeout(() => {
+        setShowAdminButton(false);
+      }, 3000);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
     };
   }, []);
 
@@ -336,6 +364,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </div>
         </div>
       </footer>
+
+      {/* Floating Admin Access Button */}
+      <Link
+        to="/admin/login"
+        className={`fixed bottom-6 right-6 bg-stone-800 hover:bg-stone-900 text-white p-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-500 z-50 group ${
+          showAdminButton
+            ? 'opacity-100 translate-y-0'
+            : 'opacity-0 translate-y-4 pointer-events-none'
+        }`}
+        title="Accès Administration"
+      >
+        <Settings className="h-6 w-6 group-hover:rotate-90 transition-transform duration-300" />
+      </Link>
     </div>
   );
 };

@@ -63,6 +63,7 @@ import RegisterPage from './pages/client/RegisterPage';
 import ProductPage from './pages/client/ProductPage';
 import CheckoutPage from './pages/client/CheckoutPage';
 import UserDashboard from './pages/client/UserDashboard';
+import OrdersPage from './pages/client/OrdersPage';
 import WishlistPage from './pages/client/WishlistPage';
 import OrderConfirmationPage from './pages/client/OrderConfirmationPage';
 import OrderTicketPage from './pages/client/OrderTicketPage';
@@ -109,6 +110,7 @@ function App() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/dashboard" element={<UserDashboard />} />
+                <Route path="/orders" element={<OrdersPage />} />
                 <Route path="/wishlist" element={<WishlistPage />} />
                 <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
                 <Route path="/order-ticket" element={<OrderTicketPage />} />
