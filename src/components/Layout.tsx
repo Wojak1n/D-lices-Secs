@@ -4,6 +4,7 @@ import { Flower2, ShoppingCart, Heart, User, Search, Menu, X } from 'lucide-reac
 import { useAuth } from '../contexts/AuthContext';
 import { useCart } from '../contexts/CartContext';
 import { useState, useEffect, useRef } from 'react';
+import LeafLogo from './LeafLogo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -48,9 +49,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link to="/" className="flex items-center space-x-2">
-              <Flower2 className="h-8 w-8 text-emerald-600" />
-              <span className="text-2xl font-bold text-stone-800">Délices Secs</span>
+            <Link to="/" className="flex items-center">
+              <LeafLogo size={64} className="text-emerald-600" />
+              <span className="text-2xl font-bold text-stone-800 -ml-4">Délices Secs</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -291,9 +292,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <div className="flex items-center space-x-2 mb-4">
-                <Flower2 className="h-6 w-6 text-emerald-400" />
-                <span className="text-xl font-bold">Délices Secs</span>
+              <div className="flex items-center mb-4">
+                <LeafLogo size={48} className="text-emerald-400" />
+                <span className="text-xl font-bold -ml-3">Délices Secs</span>
               </div>
               <p className="text-stone-300">
                 Votre boutique de délices secs de confiance, pour une alimentation saine et savoureuse.

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Shield, Flower2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import LeafLogo from '../../components/LeafLogo';
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -25,9 +26,9 @@ const AdminLogin: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-stone-800 to-stone-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <div className="flex items-center justify-center space-x-2 mb-8">
-            <Flower2 className="h-10 w-10 text-emerald-400" />
-            <span className="text-3xl font-bold text-white">Délices Secs</span>
+          <div className="flex items-center justify-center mb-8">
+            <LeafLogo size={64} className="text-emerald-400" />
+            <span className="text-3xl font-bold text-white -ml-4">Délices Secs</span>
           </div>
           <div className="bg-stone-700 p-4 rounded-lg mb-6">
             <Shield className="h-12 w-12 text-emerald-400 mx-auto mb-2" />

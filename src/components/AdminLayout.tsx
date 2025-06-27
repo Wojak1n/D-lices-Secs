@@ -13,6 +13,7 @@ import {
   Gift
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import LeafLogo from './LeafLogo';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -59,9 +60,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <div className={`bg-stone-800 text-white transition-all duration-300 ${isSidebarOpen ? 'w-64 fixed md:relative z-50 h-full' : 'w-0 md:w-64'} overflow-hidden relative flex flex-col`}>
         <div className="p-6">
-          <div className="flex items-center space-x-3">
-            <Flower2 className="h-8 w-8 text-emerald-400" />
-            <span className="text-xl font-bold">Délices Secs Admin</span>
+          <div className="flex items-center">
+            <LeafLogo size={56} className="text-emerald-400" />
+            <span className="text-xl font-bold -ml-3">Délices Secs Admin</span>
           </div>
         </div>
 
