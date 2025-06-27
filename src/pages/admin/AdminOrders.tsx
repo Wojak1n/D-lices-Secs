@@ -36,7 +36,8 @@ const AdminOrders: React.FC = () => {
     if (searchTerm) {
       filtered = filtered.filter(order =>
         order.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        getUserName(order.userId).toLowerCase().includes(searchTerm.toLowerCase())
+        getUserName(order.userId, order).toLowerCase().includes(searchTerm.toLowerCase()) ||
+        getUserEmail(order.userId, order).toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -47,14 +48,24 @@ const AdminOrders: React.FC = () => {
     setFilteredOrders(filtered);
   };
 
-  const getUserName = (userId: string) => {
+  const getUserName = (userId: string, order?: Order) => {
+    if (userId.startsWith('guest-') && order?.guestInfo) {
+      return `${order.guestInfo.firstName} ${order.guestInfo.lastName} (Invité)`;
+    }
     const user = users.find(u => u.id === userId);
     return user ? `${user.firstName} ${user.lastName}` : 'Utilisateur inconnu';
   };
 
-  const getUserEmail = (userId: string) => {
+  const getUserEmail = (userId: string, order?: Order) => {
+    if (userId.startsWith('guest-') && order?.guestInfo) {
+      return order.guestInfo.email;
+    }
     const user = users.find(u => u.id === userId);
     return user?.email || 'Email inconnu';
+  };
+
+  const isGuestUser = (userId: string) => {
+    return userId.startsWith('guest-');
   };
 
   const updateOrderStatus = (orderId: string, newStatus: string) => {
@@ -152,8 +163,18 @@ const AdminOrders: React.FC = () => {
                       </p>
                     </td>
                     <td className="py-4 px-6">
-                      <p className="font-medium text-stone-800">{getUserName(order.userId)}</p>
-                      <p className="text-stone-600 text-sm">{getUserEmail(order.userId)}</p>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium text-stone-800">{getUserName(order.userId, order)}</p>
+                        {isGuestUser(order.userId) && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            Invité
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-stone-600 text-sm">{getUserEmail(order.userId, order)}</p>
+                      {isGuestUser(order.userId) && order.guestInfo?.phone && (
+                        <p className="text-stone-600 text-sm">📞 {order.guestInfo.phone}</p>
+                      )}
                     </td>
                     <td className="py-4 px-6 text-stone-600">
                       {new Date(order.createdAt).toLocaleDateString('fr-FR', {

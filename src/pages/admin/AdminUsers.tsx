@@ -4,13 +4,27 @@ import AdminLayout from '../../components/AdminLayout';
 import { User, Order } from '../../types';
 import { formatPrice } from '../../utils/currency';
 
+interface GuestUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  isGuest: true;
+  totalSpent: number;
+  orderCount: number;
+  createdAt: string;
+}
+
 const AdminUsers: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
+  const [guestUsers, setGuestUsers] = useState<GuestUser[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
-  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<(User | GuestUser)[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('totalSpent');
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser, setSelectedUser] = useState<User | GuestUser | null>(null);
+  const [showGuestUsers, setShowGuestUsers] = useState(true);
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
@@ -19,17 +33,47 @@ const AdminUsers: React.FC = () => {
 
   useEffect(() => {
     filterAndSortUsers();
-  }, [users, searchTerm, sortBy]);
+  }, [users, guestUsers, searchTerm, sortBy, showGuestUsers]);
+
+  const extractGuestUsers = (orders: Order[]): GuestUser[] => {
+    const guestOrdersMap = new Map<string, { info: any, orders: Order[] }>();
+
+    orders.forEach(order => {
+      if (order.userId.startsWith('guest-') && order.guestInfo) {
+        const guestId = order.userId;
+        if (!guestOrdersMap.has(guestId)) {
+          guestOrdersMap.set(guestId, { info: order.guestInfo, orders: [] });
+        }
+        guestOrdersMap.get(guestId)!.orders.push(order);
+      }
+    });
+
+    return Array.from(guestOrdersMap.entries()).map(([guestId, data]) => ({
+      id: guestId,
+      firstName: data.info.firstName,
+      lastName: data.info.lastName,
+      email: data.info.email,
+      phone: data.info.phone,
+      isGuest: true as const,
+      totalSpent: data.orders.reduce((sum, order) => sum + order.total, 0) / 10.5, // Convert to EUR
+      orderCount: data.orders.length,
+      createdAt: data.orders[0].createdAt
+    }));
+  };
 
   const loadData = () => {
     const storedUsers = JSON.parse(localStorage.getItem('users') || '[]');
     const storedOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+    const extractedGuestUsers = extractGuestUsers(storedOrders);
+
     setUsers(storedUsers);
     setOrders(storedOrders);
+    setGuestUsers(extractedGuestUsers);
   };
 
   const filterAndSortUsers = () => {
-    let filtered = [...users];
+    const allUsers: (User | GuestUser)[] = showGuestUsers ? [...users, ...guestUsers] : users;
+    let filtered = [...allUsers];
 
     if (searchTerm) {
       filtered = filtered.filter(user =>
@@ -42,7 +86,11 @@ const AdminUsers: React.FC = () => {
     // Sort users
     switch (sortBy) {
       case 'totalSpent':
-        filtered.sort((a, b) => b.totalSpent - a.totalSpent);
+        filtered.sort((a, b) => {
+          const aSpent = 'isGuest' in a ? a.totalSpent : a.totalSpent;
+          const bSpent = 'isGuest' in b ? b.totalSpent : b.totalSpent;
+          return bSpent - aSpent;
+        });
         break;
       case 'name':
         filtered.sort((a, b) => a.firstName.localeCompare(b.firstName));
@@ -62,13 +110,22 @@ const AdminUsers: React.FC = () => {
     return orders.filter(order => order.userId === userId);
   };
 
-  const getUserOrderCount = (userId: string) => {
-    return getUserOrders(userId).length;
+  const getUserOrderCount = (user: User | GuestUser) => {
+    if ('isGuest' in user) {
+      return user.orderCount;
+    }
+    return getUserOrders(user.id).length;
   };
 
-  const getUserProductCount = (userId: string) => {
-    const userOrders = getUserOrders(userId);
-    return userOrders.reduce((total, order) => 
+  const getUserProductCount = (user: User | GuestUser) => {
+    if ('isGuest' in user) {
+      const userOrders = getUserOrders(user.id);
+      return userOrders.reduce((total, order) =>
+        total + order.items.reduce((itemTotal, item) => itemTotal + item.quantity, 0), 0
+      );
+    }
+    const userOrders = getUserOrders(user.id);
+    return userOrders.reduce((total, order) =>
       total + order.items.reduce((itemTotal, item) => itemTotal + item.quantity, 0), 0
     );
   };
@@ -138,6 +195,18 @@ const AdminUsers: React.FC = () => {
                 <option value="createdAt">Trier par date d'inscription</option>
               </select>
             </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="showGuests"
+                checked={showGuestUsers}
+                onChange={(e) => setShowGuestUsers(e.target.checked)}
+                className="rounded border-stone-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <label htmlFor="showGuests" className="text-stone-700 font-medium">
+                Inclure les invités ({guestUsers.length})
+              </label>
+            </div>
           </div>
         </div>
 
@@ -160,13 +229,26 @@ const AdminUsers: React.FC = () => {
                 {filteredUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-stone-50">
                     <td className="py-4 px-6">
-                      <div>
-                        <p className="font-medium text-stone-800">
-                          {user.firstName} {user.lastName}
-                        </p>
-                        <p className="text-stone-600 text-sm">
-                          Portefeuille: {formatPrice(user.walletBalance)}
-                        </p>
+                      <div className="flex items-center space-x-2">
+                        <div>
+                          <p className="font-medium text-stone-800">
+                            {user.firstName} {user.lastName}
+                          </p>
+                          {'isGuest' in user ? (
+                            <p className="text-stone-600 text-sm">
+                              📞 {user.phone}
+                            </p>
+                          ) : (
+                            <p className="text-stone-600 text-sm">
+                              Portefeuille: {formatPrice(user.walletBalance)}
+                            </p>
+                          )}
+                        </div>
+                        {'isGuest' in user && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">
+                            Invité
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-4 px-6 text-stone-600">
@@ -178,10 +260,10 @@ const AdminUsers: React.FC = () => {
                       </span>
                     </td>
                     <td className="py-4 px-6 text-stone-600">
-                      {getUserOrderCount(user.id)}
+                      {getUserOrderCount(user)}
                     </td>
                     <td className="py-4 px-6 text-stone-600">
-                      {getUserProductCount(user.id)}
+                      {getUserProductCount(user)}
                     </td>
                     <td className="py-4 px-6 text-stone-600">
                       {new Date(user.createdAt).toLocaleDateString('fr-FR')}
@@ -209,11 +291,18 @@ const AdminUsers: React.FC = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <div className="p-6 border-b border-stone-200">
-                <h2 className="text-xl font-semibold text-stone-800">
-                  Profil de {selectedUser.firstName} {selectedUser.lastName}
-                </h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-stone-800">
+                    Profil de {selectedUser.firstName} {selectedUser.lastName}
+                  </h2>
+                  {'isGuest' in selectedUser && (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-amber-100 text-amber-800">
+                      Utilisateur Invité
+                    </span>
+                  )}
+                </div>
               </div>
-              
+
               <div className="p-6 space-y-6">
                 {/* User Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -223,21 +312,30 @@ const AdminUsers: React.FC = () => {
                     </p>
                     <p className="text-emerald-700 text-sm">Total dépensé</p>
                   </div>
-                  <div className="bg-blue-50 rounded-lg p-4 text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatPrice(selectedUser.walletBalance)}
-                    </p>
-                    <p className="text-blue-700 text-sm">Portefeuille</p>
-                  </div>
+                  {'isGuest' in selectedUser ? (
+                    <div className="bg-amber-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-amber-600">
+                        {selectedUser.phone}
+                      </p>
+                      <p className="text-amber-700 text-sm">Téléphone</p>
+                    </div>
+                  ) : (
+                    <div className="bg-blue-50 rounded-lg p-4 text-center">
+                      <p className="text-2xl font-bold text-blue-600">
+                        {formatPrice(selectedUser.walletBalance)}
+                      </p>
+                      <p className="text-blue-700 text-sm">Portefeuille</p>
+                    </div>
+                  )}
                   <div className="bg-purple-50 rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-purple-600">
-                      {getUserOrderCount(selectedUser.id)}
+                      {getUserOrderCount(selectedUser)}
                     </p>
                     <p className="text-purple-700 text-sm">Commandes</p>
                   </div>
                   <div className="bg-orange-50 rounded-lg p-4 text-center">
                     <p className="text-2xl font-bold text-orange-600">
-                      {getUserProductCount(selectedUser.id)}
+                      {getUserProductCount(selectedUser)}
                     </p>
                     <p className="text-orange-700 text-sm">Produits</p>
                   </div>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Mail, Lock, Shield, Flower2 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -8,8 +8,15 @@ const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { adminLogin } = useAuth();
+  const { admin, adminLogin, isLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (!isLoading && admin) {
+      navigate('/admin', { replace: true });
+    }
+  }, [admin, isLoading, navigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,6 +28,18 @@ const AdminLogin: React.FC = () => {
       setError('Identifiants administrateur incorrects');
     }
   };
+
+  // Show loading while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-stone-800 to-stone-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-400 mx-auto mb-4"></div>
+          <p className="text-emerald-100">Vérification de l'authentification...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-800 to-stone-900 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">

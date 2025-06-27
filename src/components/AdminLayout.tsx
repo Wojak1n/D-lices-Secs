@@ -20,7 +20,7 @@ interface AdminLayoutProps {
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
-  const { admin, logout } = useAuth();
+  const { admin, logout, isLoading } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -35,12 +35,24 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
     }
   };
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated (only after loading is complete)
   useEffect(() => {
-    if (!admin) {
+    if (!isLoading && !admin) {
       navigate('/admin/login', { replace: true });
     }
-  }, [admin, navigate]);
+  }, [admin, isLoading, navigate]);
+
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-stone-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-600 mx-auto mb-4"></div>
+          <p className="text-stone-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!admin) {
     return null;
